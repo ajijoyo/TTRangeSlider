@@ -57,7 +57,7 @@ static const CGFloat kLabelsFontSize = 12.0f;
 
     _minDistance = -1;
     _maxDistance = -1;
-
+    _isVertical = NO;
     _enableStep = NO;
     _step = 0.1f;
 
@@ -162,17 +162,31 @@ static const CGFloat kLabelsFontSize = 12.0f;
     //positioning for the slider line
     float barSidePadding = self.barSidePadding;
     CGRect currentFrame = self.frame;
-    float yMiddle = currentFrame.size.height/2.0;
-    CGPoint lineLeftSide = CGPointMake(barSidePadding, yMiddle);
-    CGPoint lineRightSide = CGPointMake(currentFrame.size.width-barSidePadding, yMiddle);
-    self.sliderLine.frame = CGRectMake(lineLeftSide.x, lineLeftSide.y, lineRightSide.x-lineLeftSide.x, self.lineHeight);
-    
-    self.sliderLine.cornerRadius = self.lineHeight / 2.0;
-    self.sliderLineBetweenHandles.cornerRadius = self.lineHeight / 2.0;
-    
-    [self updateLabelValues];
-    [self updateHandlePositions];
-    [self updateLabelPositions];
+    if (self.isVertical) {
+        float yMiddle = currentFrame.size.width/2.0;
+        CGPoint lineLeftSide = CGPointMake(barSidePadding, yMiddle);
+        CGPoint lineRightSide = CGPointMake(currentFrame.size.height-barSidePadding, yMiddle);
+        self.sliderLine.frame = CGRectMake(lineLeftSide.x, lineLeftSide.y, self.lineHeight, lineRightSide.x-lineLeftSide.x);
+
+        self.sliderLine.cornerRadius = self.lineHeight / 2.0;
+        self.sliderLineBetweenHandles.cornerRadius = self.lineHeight / 2.0;
+
+        [self updateLabelValues];
+        [self updateHandlePositions];
+        [self updateLabelPositions];
+    } else {
+        float yMiddle = currentFrame.size.height/2.0;
+        CGPoint lineLeftSide = CGPointMake(barSidePadding, yMiddle);
+        CGPoint lineRightSide = CGPointMake(currentFrame.size.width-barSidePadding, yMiddle);
+        self.sliderLine.frame = CGRectMake(lineLeftSide.x, lineLeftSide.y, lineRightSide.x-lineLeftSide.x, self.lineHeight);
+        
+        self.sliderLine.cornerRadius = self.lineHeight / 2.0;
+        self.sliderLineBetweenHandles.cornerRadius = self.lineHeight / 2.0;
+        
+        [self updateLabelValues];
+        [self updateHandlePositions];
+        [self updateLabelPositions];
+    }
 }
 
 - (id)initWithCoder:(NSCoder *)aCoder
@@ -208,6 +222,14 @@ static const CGFloat kLabelsFontSize = 12.0f;
     }
 }
 
+-(void)setIsVertical:(BOOL)isVertical {
+    _isVertical = isVertical;
+    if (_isVertical) {
+        self.transform = CGAffineTransformMakeRotation(M_PI);
+    } else {
+        self.transform = CGAffineTransformIdentity;
+    }
+}
 
 - (void)tintColorDidChange {
     CGColorRef color = self.tintColor.CGColor;
@@ -247,6 +269,19 @@ static const CGFloat kLabelsFontSize = 12.0f;
     return valueSubtracted / maxMinDif;
 }
 
+- (float)getYPositionAlongLineForValue:(float) value {
+    //first get the percentage along the line for the value
+    float percentage = [self getPercentageAlongLineForValue:value];
+
+    //get the difference between the maximum and minimum coordinate position x values (e.g if max was x = 310, and min was x=10, difference is 300)
+    float maxMinDif = CGRectGetMaxY(self.sliderLine.frame) - CGRectGetMinY(self.sliderLine.frame);
+
+    //now multiply the percentage by the minMaxDif to see how far along the line the point should be, and add it onto the minimum x position.
+    float offset = percentage * maxMinDif;
+
+    return CGRectGetMinY(self.sliderLine.frame) + offset;
+}
+
 - (float)getXPositionAlongLineForValue:(float) value {
     //first get the percentage along the line for the value
     float percentage = [self getPercentageAlongLineForValue:value];
@@ -284,14 +319,28 @@ static const CGFloat kLabelsFontSize = 12.0f;
 
 #pragma mark - Set Positions
 - (void)updateHandlePositions {
-    CGPoint leftHandleCenter = CGPointMake([self getXPositionAlongLineForValue:self.selectedMinimum], CGRectGetMidY(self.sliderLine.frame));
-    self.leftHandle.position = leftHandleCenter;
+    if (self.isVertical) {
+        CGPoint leftHandleCenter = CGPointMake(CGRectGetMidX(self.sliderLine.frame), [self getYPositionAlongLineForValue:self.selectedMinimum]);
+        self.leftHandle.position = leftHandleCenter;
 
-    CGPoint rightHandleCenter = CGPointMake([self getXPositionAlongLineForValue:self.selectedMaximum], CGRectGetMidY(self.sliderLine.frame));
-    self.rightHandle.position= rightHandleCenter;
-    
-    //positioning for the dist slider line
-    self.sliderLineBetweenHandles.frame = CGRectMake(self.leftHandle.position.x, self.sliderLine.frame.origin.y, self.rightHandle.position.x-self.leftHandle.position.x, self.lineHeight);
+        CGPoint rightHandleCenter = CGPointMake(CGRectGetMidX(self.sliderLine.frame), [self getYPositionAlongLineForValue:self.selectedMaximum]);
+        self.rightHandle.position= rightHandleCenter;
+        //positioning for the dist slider line
+        
+        CGRect currentFrame = self.frame;
+        float yMiddle = currentFrame.size.width/2.0;
+        CGPoint lineLeftSide = CGPointMake(_barSidePadding, yMiddle);
+        self.sliderLineBetweenHandles.frame = CGRectMake(lineLeftSide.x, self.rightHandle.position.y, self.lineHeight, self.leftHandle.position.y -self.rightHandle.position.y);
+    } else {
+        CGPoint leftHandleCenter = CGPointMake([self getXPositionAlongLineForValue:self.selectedMinimum], CGRectGetMidY(self.sliderLine.frame));
+        self.leftHandle.position = leftHandleCenter;
+
+        CGPoint rightHandleCenter = CGPointMake([self getXPositionAlongLineForValue:self.selectedMaximum], CGRectGetMidY(self.sliderLine.frame));
+        self.rightHandle.position= rightHandleCenter;
+        
+        //positioning for the dist slider line
+        self.sliderLineBetweenHandles.frame = CGRectMake(self.leftHandle.position.x, self.sliderLine.frame.origin.y, self.rightHandle.position.x-self.leftHandle.position.x, self.lineHeight);
+    }
 }
 
 - (void)updateLabelPositions {
@@ -348,22 +397,42 @@ static const CGFloat kLabelsFontSize = 12.0f;
     if (CGRectContainsPoint(CGRectInset(self.leftHandle.frame, HANDLE_TOUCH_AREA_EXPANSION, HANDLE_TOUCH_AREA_EXPANSION), gesturePressLocation) || CGRectContainsPoint(CGRectInset(self.rightHandle.frame, HANDLE_TOUCH_AREA_EXPANSION, HANDLE_TOUCH_AREA_EXPANSION), gesturePressLocation))
     {
         //the touch was inside one of the handles so we're definitely going to start movign one of them. But the handles might be quite close to each other, so now we need to find out which handle the touch was closest too, and activate that one.
-        float distanceFromLeftHandle = [self distanceBetweenPoint:gesturePressLocation andPoint:[self getCentreOfRect:self.leftHandle.frame]];
-        float distanceFromRightHandle =[self distanceBetweenPoint:gesturePressLocation andPoint:[self getCentreOfRect:self.rightHandle.frame]];
+        if (_isVertical) {
+            float distanceFromLeftHandle = [self distanceBetweenPoint:gesturePressLocation andPoint:[self getCentreOfRect:self.leftHandle.frame]];
+            float distanceFromRightHandle =[self distanceBetweenPoint:gesturePressLocation andPoint:[self getCentreOfRect:self.rightHandle.frame]];
 
-        if (distanceFromLeftHandle < distanceFromRightHandle && self.disableRange == NO){
-            self.leftHandleSelected = YES;
-            [self animateHandle:self.leftHandle withSelection:YES];
-        } else {
-            if (self.selectedMaximum == self.maxValue && [self getCentreOfRect:self.leftHandle.frame].x == [self getCentreOfRect:self.rightHandle.frame].x) {
+            if (distanceFromLeftHandle < distanceFromRightHandle && self.disableRange == NO){
                 self.leftHandleSelected = YES;
                 [self animateHandle:self.leftHandle withSelection:YES];
+            } else {
+                if (self.selectedMaximum == self.maxValue && [self getCentreOfRect:self.leftHandle.frame].y == [self getCentreOfRect:self.rightHandle.frame].y) {
+                    self.leftHandleSelected = YES;
+                    [self animateHandle:self.leftHandle withSelection:YES];
+                }
+                else {
+                    self.rightHandleSelected = YES;
+                    [self animateHandle:self.rightHandle withSelection:YES];
+                }
             }
-            else {
-                self.rightHandleSelected = YES;
-                [self animateHandle:self.rightHandle withSelection:YES];
+        } else {
+            float distanceFromLeftHandle = [self distanceBetweenPoint:gesturePressLocation andPoint:[self getCentreOfRect:self.leftHandle.frame]];
+            float distanceFromRightHandle =[self distanceBetweenPoint:gesturePressLocation andPoint:[self getCentreOfRect:self.rightHandle.frame]];
+
+            if (distanceFromLeftHandle < distanceFromRightHandle && self.disableRange == NO){
+                self.leftHandleSelected = YES;
+                [self animateHandle:self.leftHandle withSelection:YES];
+            } else {
+                if (self.selectedMaximum == self.maxValue && [self getCentreOfRect:self.leftHandle.frame].x == [self getCentreOfRect:self.rightHandle.frame].x) {
+                    self.leftHandleSelected = YES;
+                    [self animateHandle:self.leftHandle withSelection:YES];
+                }
+                else {
+                    self.rightHandleSelected = YES;
+                    [self animateHandle:self.rightHandle withSelection:YES];
+                }
             }
         }
+        
 
         if ([self.delegate respondsToSelector:@selector(didStartTouchesInRangeSlider:)]){
             [self.delegate didStartTouchesInRangeSlider:self];
@@ -431,7 +500,12 @@ static const CGFloat kLabelsFontSize = 12.0f;
     CGPoint location = [touch locationInView:self];
 
     //find out the percentage along the line we are in x coordinate terms (subtracting half the frames width to account for moving the middle of the handle, not the left hand side)
-    float percentage = ((location.x-CGRectGetMinX(self.sliderLine.frame)) - self.handleDiameter/2) / (CGRectGetMaxX(self.sliderLine.frame) - CGRectGetMinX(self.sliderLine.frame));
+    float percentage;
+    if (_isVertical) {
+        percentage = ((location.y-CGRectGetMinY(self.sliderLine.frame)) - self.handleDiameter/2) / (CGRectGetMaxY(self.sliderLine.frame) - CGRectGetMinY(self.sliderLine.frame));
+    } else {
+        percentage = ((location.x-CGRectGetMinX(self.sliderLine.frame)) - self.handleDiameter/2) / (CGRectGetMaxX(self.sliderLine.frame) - CGRectGetMinX(self.sliderLine.frame));
+    }
 
     //multiply that percentage by self.maxValue to get the new selected minimum value
     float selectedValue = percentage * (self.maxValue - self.minValue) + self.minValue;

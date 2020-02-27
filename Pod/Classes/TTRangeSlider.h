@@ -37,6 +37,8 @@ IB_DESIGNABLE
  */
 @property (nonatomic, assign) IBInspectable float selectedMaximum;
 
+@property (nonatomic, assign) IBInspectable BOOL isVertical;
+
 /**
  * Each handle in the slider has a label above it showing the current selected value. By default, this is displayed as a decimal format.
  * You can override this default here by supplying your own NSNumberFormatter. For example, you could supply an NSNumberFormatter that has a currency style, or a prefix or suffix.

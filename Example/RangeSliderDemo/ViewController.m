@@ -9,9 +9,7 @@
 #import "ViewController.h"
 
 @interface ViewController ()
-@property (weak, nonatomic) IBOutlet TTRangeSlider *rangeSlider;
-@property (weak, nonatomic) IBOutlet TTRangeSlider *rangeSliderCurrency;
-@property (weak, nonatomic) IBOutlet TTRangeSlider *rangeSliderCustom;
+@property (nonatomic) TTRangeSlider *rangeSliderCurrency;
 @end
 
 @implementation ViewController
@@ -24,47 +22,29 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     
-    //standard rsnge slider
-    self.rangeSlider.minValue = 0;
-    self.rangeSlider.maxValue = 200;
-    self.rangeSlider.selectedMinimum = 50;
-    self.rangeSlider.selectedMaximum = 150;
-    
-    self.rangeSlider.shadowRadius = 2;
-    self.rangeSlider.shadowOpacity = 0.75;
-    
-    [self.rangeSlider addTarget:self action:@selector(logControlEvent:) forControlEvents:UIControlEventValueChanged];
     
     //currency range slider
+    self.rangeSliderCurrency = [TTRangeSlider new];
+    self.rangeSliderCurrency.backgroundColor = [UIColor redColor];
     self.rangeSliderCurrency.delegate = self;
-    self.rangeSliderCurrency.minValue = 50;
+    self.rangeSliderCurrency.frame = CGRectMake(40, 80, 40, 300);
+    self.rangeSliderCurrency.isVertical = YES;
+    self.rangeSliderCurrency.tintColorBetweenHandles = [UIColor blackColor];
+    self.rangeSliderCurrency.tintColor = [UIColor blueColor];
+    self.rangeSliderCurrency.minValue = 0;
     self.rangeSliderCurrency.maxValue = 150;
+    self.rangeSliderCurrency.lineHeight = 4;
     self.rangeSliderCurrency.selectedMinimum = 50;
-    self.rangeSliderCurrency.selectedMaximum = 150;
+    self.rangeSliderCurrency.selectedMaximum = 100;
     self.rangeSliderCurrency.handleColor = [UIColor greenColor];
+    self.rangeSliderCurrency.minDistance = 5;
+    self.rangeSliderCurrency.hideLabels = true;
     self.rangeSliderCurrency.handleDiameter = 30;
     self.rangeSliderCurrency.selectedHandleDiameterMultiplier = 1.3;
     NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
     formatter.numberStyle = NSNumberFormatterCurrencyStyle;
     self.rangeSliderCurrency.numberFormatterOverride = formatter;
-    
-    //custom number formatter range slider
-    self.rangeSliderCustom.delegate = self;
-    self.rangeSliderCustom.minValue = 0;
-    self.rangeSliderCustom.maxValue = 100;
-    self.rangeSliderCustom.selectedMinimum = 40;
-    self.rangeSliderCustom.selectedMaximum = 60;
-    self.rangeSliderCustom.handleImage = [UIImage imageNamed:@"custom-handle"];
-    self.rangeSliderCustom.selectedHandleDiameterMultiplier = 1;
-    self.rangeSliderCustom.tintColorBetweenHandles = [UIColor redColor];
-    self.rangeSliderCustom.lineBorderWidth = 1;
-    self.rangeSliderCustom.lineBorderColor = [UIColor darkGrayColor];
-    NSNumberFormatter *customFormatter = [[NSNumberFormatter alloc] init];
-    customFormatter.positiveSuffix = @"B";
-    self.rangeSliderCustom.numberFormatterOverride = customFormatter;
-    
-    self.rangeSliderCustom.shadowRadius = 3;
-    self.rangeSliderCustom.shadowOpacity = 0.5;
+    [self.view addSubview: self.rangeSliderCurrency];
     
 }
 
@@ -77,9 +57,6 @@
 -(void)rangeSlider:(TTRangeSlider *)sender didChangeSelectedMinimumValue:(float)selectedMinimum andMaximumValue:(float)selectedMaximum{
     if (sender == self.rangeSliderCurrency) {
         NSLog(@"Currency slider updated. Min Value: %.0f Max Value: %.0f", selectedMinimum, selectedMaximum);
-    }
-    else if (sender == self.rangeSliderCustom){
-        NSLog(@"Custom slider updated. Min Value: %.0f Max Value: %.0f", selectedMinimum, selectedMaximum);
     }
 }
 
